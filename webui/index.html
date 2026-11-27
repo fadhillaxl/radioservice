@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Icom IC-9700 Control & Monitoring (Hamlib 3081)</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --panel: #131a27;
+      --panel-alt: #192233;
+      --border: #27344d;
+      --text: #e6edf7;
+      --muted: #8b9bb8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --amber: #f59e0b;
+      --green: #22c55e;
+      --red: #ef4444;
+      --font-mono: "JetBrains Mono", "Fira Code", "SFMono-Regular", Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.45;
+      padding: 18px;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    .header {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-tag {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .status-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .dot.ok { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .dot.warn { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+    .dot.err { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 960px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* VFO LCD Display */
+    .lcd {
+      background: #060a10;
+      border: 1px solid #1e2d44;
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.7);
+    }
+
+    .lcd-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .lcd-pills {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .lcd-pill {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      background: #13233a;
+      color: var(--accent);
+      border: 1px solid #1f3a60;
+    }
+
+    .lcd-pill.tx {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border-color: var(--red);
+    }
+
+    .lcd-pill.rx {
+      background: rgba(34, 197, 94, 0.16);
+      color: #86efac;
+      border-color: var(--green);
+    }
+
+    .freq-display {
+      font-family: var(--font-mono);
+      font-size: 2.55rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #f8fafc;
+      text-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .freq-unit {
+      font-size: 1rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* S-Meter */
+    .meter-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meter-labels {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .meter-bar-bg {
+      height: 10px;
+      background: #111827;
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid #1f2937;
+    }
+
+    .meter-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e 0%, #eab308 70%, #ef4444 100%);
+      transition: width 0.25s ease;
+    }
+
+    /* Buttons & Controls */
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    @media (max-width: 600px) {
+      .step-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .freq-display {
+        font-size: 1.85rem;
+      }
+    }
+
+    button, select, input {
+      font-family: inherit;
+      font-size: 0.85rem;
+    }
+
+    .btn {
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 11px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      background: #1f2b42;
+    }
+
+    .btn-primary {
+      background: #0284c7;
+      border-color: #0369a1;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: var(--red);
+      color: #fca5a5;
+    }
+
+    .btn-danger.active {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-success {
+      background: rgba(34, 197, 94, 0.18);
+      border-color: var(--green);
+      color: #86efac;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .input, .select {
+      background: #0c121d;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 10px;
+      outline: none;
+    }
+
+    .input:focus, .select:focus {
+      border-color: var(--accent);
+    }
+
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .preset-btn {
+      font-size: 0.76rem;
+      padding: 5px 9px;
+      font-family: var(--font-mono);
+    }
+
+    /* Form Grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 560px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* Sliders */
+    .sliders {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .slider-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 52px;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent);
+      width: 100%;
+      cursor: pointer;
+    }
+
+    /* Hardware Table & Logs */
+    .hw-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.82rem;
+    }
+
+    .hw-item {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .log-box {
+      background: #060a10;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: #cbd5e1;
+      height: 190px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1e293b;
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Header -->
+    <header class="header">
+      <div class="brand">
+        <span class="brand-tag">IC-9700</span>
+        <div>
+          <h1>Icom IC-9700 Rigctld Monitor & Settings</h1>
+          <div class="brand-sub">Ubuntu 24.04 • Hamlib Model 3081 • VHF / UHF / 1.2 GHz</div>
+        </div>
+      </div>
+
+      <div class="status-strip">
+        <div class="badge" title="Status proses rigctld & koneksi CAT">
+          <span id="dotRig" class="dot"></span>
+          <span id="lblRigStatus">Memuat...</span>
+        </div>
+        <div class="badge" title="USB UART CP210x (10c4:ea60)">
+          <span id="dotUart" class="dot"></span>
+          <span>UART 10c4:ea60</span>
+        </div>
+        <div class="badge" title="TI PCM2901 USB Audio CODEC (08bb:2901)">
+          <span id="dotAudio" class="dot"></span>
+          <span id="lblAudioStatus">CODEC 08bb:2901</span>
+        </div>
+        <select id="pollInterval" class="select" aria-label="Interval Polling">
+          <option value="1000">Poll: 1 dtk</option>
+          <option value="2000" selected>Poll: 2 dtk</option>
+          <option value="5000">Poll: 5 dtk</option>
+          <option value="0">Poll: Jeda</option>
+        </select>
+        <button class="btn" onclick="fetchStatus()">Refresh</button>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="grid">
+      <!-- Left Column: Live VFO & Transceiver Control -->
+      <section class="card">
+        <div class="card-header">
+          <span class="card-title">Live Transceiver Monitor & VFO Control</span>
+          <span id="lblPortActive" class="mono" style="color: var(--muted);">Port: -</span>
+        </div>
+
+        <!-- LCD Readout -->
+        <div class="lcd">
+          <div class="lcd-top">
+            <div class="lcd-pills">
+              <span id="pillPtt" class="lcd-pill rx">RX</span>
+              <span id="pillVfo" class="lcd-pill">VFOA</span>
+              <span id="pillMode" class="lcd-pill">FM</span>
+              <span id="pillBw" class="lcd-pill">BW: -</span>
+            </div>
+            <span id="lblLastUpdate">--:--:--</span>
+          </div>
+
+          <div class="freq-display">
+            <span id="lblFreqFormatted">---.---.---</span>
+            <span class="freq-unit">MHz</span>
+          </div>
+
+          <!-- S-Meter -->
+          <div class="meter-wrap">
+            <div class="meter-labels">
+              <span>S1</span><span>S3</span><span>S5</span><span>S7</span><span>S9</span><span>+20</span><span>+40dB</span>
+              <span id="lblStrengthVal">S-Meter: - dB | SWR: -</span>
+            </div>
+            <div class="meter-bar-bg">
+              <div id="barStrength" class="meter-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tuning Steps -->
+        <div>
+          <div style="font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; font-weight: 600;">
+            Langkah Tuning Cepat (Step):
+          </div>
+          <div class="step-grid">
+            <button class="btn mono" onclick="stepFreq(-1000000)">-1M</button>
+            <button class="btn mono" onclick="stepFreq(-100000)">-100k</button>
+            <button class="btn mono" onclick="stepFreq(-25000)">-25k</button>
+            <button class="btn mono" onclick="stepFreq(-12500)">-12.5k</button>
+            <button class="btn mono" onclick="stepFreq(-5000)">-5k</button>
+            <button class="btn mono" onclick="stepFreq(-1000)">-1k</button>
+            <button class="btn mono" onclick="stepFreq(-100)">-100</button>
+            <button class="btn mono" onclick="stepFreq(100)">+100</button>
+            <button class="btn mono" onclick="stepFreq(1000)">+1k</button>
+            <button class="btn mono" onclick="stepFreq(5000)">+5k</button>
+            <button class="btn mono" onclick="stepFreq(12500)">+12.5k</button>
+            <button class="btn mono" onclick="stepFreq(25000)">+25k</button>
+            <button class="btn mono" onclick="stepFreq(100000)">+100k</button>
+            <button class="btn mono" onclick="stepFreq(1000000)">+1M</button>
+          </div>
+        </div>
+
+        <!-- Direct Frequency Input & Band Presets -->
+        <div class="input-row">
+          <input
+            id="inpFreq"
+            type="text"
+            class="input mono"
+            style="flex: 1;"
+            placeholder="Masukkan MHz (cth: 145.500 / 435.800 / 1296.100) atau Hz"
+            onkeydown="if(event.key==='Enter') applyDirectFreq()"
+          />
+          <button class="btn btn-primary" onclick="applyDirectFreq()">Set Frekuensi</button>
+        </div>
+
+        <div class="preset-row">
+          <button class="btn preset-btn" onclick="setFreqMHz(144.200, 'USB')">2m SSB 144.200</button>
+          <button class="btn preset-btn" onclick="setFreqMHz(144.390, 'PKTFM')">2m APRS 144.390</button>
+          <button class="btn preset-btn" onclick="setFreqMHz(145.500, 'FM')">2m Call 145.500</button>
+          <button class="btn preset-btn" onclick="setFreqMHz(145.800, 'FM')">ISS 145.800</button>
+          <button class="btn preset-btn" onclick="setFreqMHz(432.100, 'USB')">70cm SSB 432.100</button>
+          <button class="btn preset-btn" onclick="setFreqMHz(433.500, 'FM')">70cm Call 433.500</button>
+          <button class="btn preset-btn" onclick="setFreqMHz(435.800, 'USB')">70cm Sat 435.800</button>
+          <button class="btn preset-btn" onclick="setFreqMHz(1296.100, 'USB')">23cm SSB 1296.100</button>
+        </div>
+
+        <!-- Mode, VFO & PTT Controls -->
+        <div class="form-grid" style="padding-top: 6px; border-top: 1px solid var(--border);">
+          <div class="field">
+            <label>Mode & Passband (Hz)</label>
+            <div class="input-row">
+              <select id="selMode" class="select" style="flex: 1;">
+                <option value="FM">FM</option>
+                <option value="USB">USB</option>
+                <option value="LSB">LSB</option>
+                <option value="CW">CW</option>
+                <option value="CWR">CWR</option>
+                <option value="AM">AM</option>
+                <option value="PKTUSB">PKTUSB (Data USB)</option>
+                <option value="PKTFM">PKTFM (Data FM)</option>
+              </select>
+              <input id="inpPassband" type="number" class="input mono" style="width: 90px;" value="0" title="0 = Default Passband" />
+              <button class="btn btn-primary" onclick="applyMode()">Set</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>VFO & Kontrol PTT</label>
+            <div class="input-row">
+              <select id="selVfo" class="select" onchange="applyVfo()">
+                <option value="VFOA">VFO A</option>
+                <option value="VFOB">VFO B</option>
+                <option value="Main">Main</option>
+                <option value="Sub">Sub</option>
+              </select>
+              <button id="btnPttRx" class="btn btn-success" onclick="setPtt(0)">RX</button>
+              <button id="btnPttTx" class="btn btn-danger" onclick="setPtt(1)">TX (PTT)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level Sliders -->
+        <div class="sliders" style="padding-top: 6px; border-top: 1px solid var(--border);">
+          <div class="slider-row">
+            <span>RF Power</span>
+            <input id="rngPower" type="range" min="0" max="100" value="50" onchange="setLevel('RFPOWER', this.value)" oninput="document.getElementById('valPower').textContent=this.value+'%'" />
+            <span id="valPower" class="mono">50%</span>
+          </div>
+          <div class="slider-row">
+            <span>AF Gain (Vol)</span>
+            <input id="rngAf" type="range" min="0" max="100" value="30" onchange="setLevel('AF', this.value)" oninput="document.getElementById('valAf').textContent=this.value+'%'" />
+            <span id="valAf" class="mono">30%</span>
+          </div>
+          <div class="slider-row">
+            <span>Squelch (SQL)</span>
+            <input id="rngSql" type="range" min="0" max="100" value="20" onchange="setLevel('SQL', this.value)" oninput="document.getElementById('valSql').textContent=this.value+'%'" />
+            <span id="valSql" class="mono">20%</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Update Settings & Hardware Auto-Discovery -->
+      <section class="card">
+        <div class="card-header">
+          <span class="card-title">Konfigurasi Layanan & Update Setting</span>
+          <div class="input-row">
+            <button class="btn" onclick="serviceAction('restart')">Restart rigctld</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field full">
+            <label for="cfgPort">Port Serial CAT (Port A)</label>
+            <select id="cfgPort" class="select mono">
+              <option value="auto">auto (/dev/serial/by-id/*IC-9700*A-if00-port0 -> /dev/ttyUSB0)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="cfgBaud">Baudrate CI-V USB</label>
+            <select id="cfgBaud" class="select mono">
+              <option value="115200">115200 (Default IC-9700 Unlinked)</option>
+              <option value="57600">57600</option>
+              <option value="38400">38400</option>
+              <option value="19200">19200</option>
+              <option value="9600">9600</option>
+              <option value="4800">4800</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="cfgModel">Hamlib Model ID</label>
+            <input id="cfgModel" type="number" class="input mono" value="3081" />
+          </div>
+
+          <div class="field">
+            <label for="cfgCiv">Alamat CI-V (Hex)</label>
+            <input id="cfgCiv" type="text" class="input mono" value="0xA2" placeholder="0xA2" />
+          </div>
+
+          <div class="field">
+            <label for="cfgBindPort">Bind Address & Port TCP</label>
+            <div class="input-row">
+              <input id="cfgBind" type="text" class="input mono" style="flex: 1;" value="0.0.0.0" />
+              <input id="cfgTcpPort" type="number" class="input mono" style="width: 90px;" value="4532" />
+            </div>
+          </div>
+
+          <div class="field full">
+            <label for="cfgExtra">Argumen Tambahan rigctld (Opsional)</label>
+            <input id="cfgExtra" type="text" class="input mono" placeholder="Contoh: -v atau --set-conf=..." />
+          </div>
+        </div>
+
+        <div class="input-row" style="justify-content: space-between; padding-top: 4px;">
+          <button class="btn" onclick="testVfoConnection()">Tes Baca VFO (rigctl f)</button>
+          <button class="btn btn-primary" onclick="saveAndRestartSettings()">Simpan & Terapkan Setting</button>
+        </div>
+
+        <!-- Hardware Discovery Summary -->
+        <div style="border-top: 1px solid var(--border); padding-top: 10px;">
+          <div style="font-size: 0.78rem; color: var(--muted); font-weight: 700; margin-bottom: 8px; text-transform: uppercase;">
+            Auto-Discovery Perangkat Host (/dev & ALSA)
+          </div>
+          <div id="hwSummary" class="hw-list">
+            <div class="hw-item">Memuat informasi perangkat...</div>
+          </div>
+        </div>
+
+        <!-- Raw Command Console -->
+        <div style="border-top: 1px solid var(--border); padding-top: 10px;">
+          <div style="font-size: 0.78rem; color: var(--muted); font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">
+            Konsol Perintah Langsung (rigctld TCP)
+          </div>
+          <div class="input-row">
+            <input
+              id="inpRawCmd"
+              type="text"
+              class="input mono"
+              style="flex: 1;"
+              placeholder="Contoh: f, m, v, l STRENGTH, dump_caps"
+              onkeydown="if(event.key==='Enter') sendRawCommand()"
+            />
+            <button class="btn" onclick="sendRawCommand()">Kirim</button>
+          </div>
+          <pre id="rawOutput" class="mono" style="margin-top: 6px; font-size: 0.76rem; color: var(--accent);"></pre>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom Card: Service Logs -->
+    <section class="card">
+      <div class="card-header">
+        <span class="card-title">Log Supervisor & rigctld</span>
+        <span id="lblUptime" class="mono" style="color: var(--muted); font-size: 0.8rem;">Uptime: -</span>
+      </div>
+      <div id="logBox" class="log-box">Memuat log...</div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let currentFreqHz = 145500000;
+    let settingsLoadedOnce = false;
+    let pollTimer = null;
+
+    function showToast(msg, isError = false) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.style.borderColor = isError ? "var(--red)" : "var(--accent)";
+      el.style.display = "block";
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.style.display = "none"; }, 3800);
+    }
+
+    function formatFreqHz(hz) {
+      if (!hz || isNaN(hz)) return "---.---.---";
+      const s = String(Math.round(hz)).padStart(9, "0");
+      const mhz = s.slice(0, s.length - 6);
+      const khz = s.slice(s.length - 6, s.length - 3);
+      const rem = s.slice(s.length - 3);
+      return `${mhz}.${khz}.${rem}`;
+    }
+
+    async function apiPost(url, data) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+        renderStatus(data);
+      } catch (err) {
+        document.getElementById("dotRig").className = "dot err";
+        document.getElementById("lblRigStatus").textContent = "UI Offline";
+      }
+    }
+
+    function renderStatus(data) {
+      const { service, settings, radio, hardware, logs } = data;
+
+      // 1. Header status badges
+      const dotRig = document.getElementById("dotRig");
+      const lblRig = document.getElementById("lblRigStatus");
+      if (service.running && radio.connected) {
+        dotRig.className = "dot ok";
+        lblRig.textContent = `rigctld ONLINE (PID ${service.pid})`;
+      } else if (service.running) {
+        dotRig.className = "dot warn";
+        lblRig.textContent = `rigctld Berjalan (Radio Tidak Merespons)`;
+      } else {
+        dotRig.className = "dot err";
+        lblRig.textContent = "rigctld BERHENTI";
+      }
+
+      document.getElementById("dotUart").className = hardware.usb_uart_10c4_ea60 ? "dot ok" : "dot err";
+      document.getElementById("dotAudio").className = hardware.usb_audio_08bb_2901 ? "dot ok" : "dot err";
+
+      const codecCard = (hardware.alsa_cards || []).find(c => c.is_codec);
+      document.getElementById("lblAudioStatus").textContent = codecCard
+        ? `ALSA Card #${codecCard.card_num} (${codecCard.card_id})`
+        : "CODEC 08bb:2901";
+
+      document.getElementById("lblPortActive").textContent = `Port Aktif: ${service.active_serial_port}`;
+      document.getElementById("lblUptime").textContent = `Uptime: ${service.uptime_sec} dtk`;
+      document.getElementById("lblLastUpdate").textContent = new Date().toLocaleTimeString("id-ID");
+
+      // 2. Radio Telemetry
+      if (radio.frequency_hz) {
+        currentFreqHz = radio.frequency_hz;
+        document.getElementById("lblFreqFormatted").textContent = formatFreqHz(radio.frequency_hz);
+      }
+
+      if (radio.mode) {
+        document.getElementById("pillMode").textContent = radio.mode;
+        const selMode = document.getElementById("selMode");
+        if (document.activeElement !== selMode) selMode.value = radio.mode;
+      }
+
+      if (radio.passband_hz !== null && radio.passband_hz !== undefined) {
+        document.getElementById("pillBw").textContent = `BW: ${radio.passband_hz} Hz`;
+      }
+
+      if (radio.vfo) {
+        document.getElementById("pillVfo").textContent = radio.vfo;
+      }
+
+      const isTx = Number(radio.ptt) === 1;
+      const pillPtt = document.getElementById("pillPtt");
+      pillPtt.textContent = isTx ? "TX (ON AIR)" : "RX";
+      pillPtt.className = isTx ? "lcd-pill tx" : "lcd-pill rx";
+      document.getElementById("btnPttTx").classList.toggle("active", isTx);
+
+      // S-Meter (-54 dB = S0, 0 dB = S9, +40 dB = max)
+      const str = radio.strength_db;
+      const swr = radio.swr;
+      if (str !== null && str !== undefined) {
+        const pct = Math.max(0, Math.min(100, ((str + 54) / 94) * 100));
+        document.getElementById("barStrength").style.width = `${pct.toFixed(1)}%`;
+        document.getElementById("lblStrengthVal").textContent =
+          `Signal: ${str} dB | SWR: ${swr !== null && swr !== undefined ? swr.toFixed(2) : "-"}`;
+      } else {
+        document.getElementById("barStrength").style.width = "0%";
+        document.getElementById("lblStrengthVal").textContent = radio.error || "S-Meter: -";
+      }
+
+      // Sliders update if user is not dragging them
+      updateSlider("rngPower", "valPower", radio.rfpower);
+      updateSlider("rngAf", "valAf", radio.af_gain);
+      updateSlider("rngSql", "valSql", radio.squelch);
+
+      // 3. Populate Serial Port dropdown & Settings
+      const cfgPort = document.getElementById("cfgPort");
+      const currentSelected = settingsLoadedOnce ? cfgPort.value : settings.rig_port;
+      cfgPort.innerHTML = `<option value="auto">auto (Deteksi: ${hardware.detected_port_a})</option>`;
+      (hardware.serial_ports || []).forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.path;
+        opt.textContent = `${p.path} -> ${p.realpath}${p.is_ic9700_port_a ? " [Port A CAT]" : ""}`;
+        cfgPort.appendChild(opt);
+      });
+      if ([...cfgPort.options].some(o => o.value === currentSelected)) {
+        cfgPort.value = currentSelected;
+      }
+
+      if (!settingsLoadedOnce) {
+        document.getElementById("cfgBaud").value = String(settings.rig_baud);
+        document.getElementById("cfgModel").value = settings.rig_model;
+        document.getElementById("cfgCiv").value = settings.civ_addr || "0xA2";
+        document.getElementById("cfgBind").value = settings.rigctld_bind || "0.0.0.0";
+        document.getElementById("cfgTcpPort").value = settings.rigctld_port || 4532;
+        document.getElementById("cfgExtra").value = settings.extra_args || "";
+        settingsLoadedOnce = true;
+      }
+
+      // 4. Hardware Discovery Summary
+      const hwEl = document.getElementById("hwSummary");
+      const alsaText = (hardware.alsa_cards || []).length
+        ? hardware.alsa_cards.map(c => `Card #${c.card_num} [${c.card_id}] (${c.device})`).join(", ")
+        : "Tidak ada kartu ALSA terdeteksi";
+      const portText = (hardware.serial_ports || []).length
+        ? hardware.serial_ports.map(p => p.path).join(", ")
+        : "Tidak ada port serial (/dev/ttyUSB*)";
+
+      hwEl.innerHTML = `
+        <div class="hw-item">
+          <span>Port A Auto-Discovery</span>
+          <span class="mono" style="color: var(--accent);">${hardware.detected_port_a}</span>
+        </div>
+        <div class="hw-item">
+          <span>Daftar Port Serial</span>
+          <span class="mono">${portText}</span>
+        </div>
+        <div class="hw-item">
+          <span>Kartu Audio ALSA CODEC</span>
+          <span class="mono">${alsaText}</span>
+        </div>
+      `;
+
+      // 5. Logs
+      const logBox = document.getElementById("logBox");
+      const wasAtBottom = logBox.scrollHeight - logBox.clientHeight <= logBox.scrollTop + 20;
+      logBox.textContent = (logs || []).join("\n") || "Belum ada log.";
+      if (wasAtBottom) logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function updateSlider(sliderId, labelId, floatVal) {
+      if (floatVal === null || floatVal === undefined) return;
+      const el = document.getElementById(sliderId);
+      if (document.activeElement === el) return;
+      const pct = Math.round(floatVal * 100);
+      el.value = pct;
+      document.getElementById(labelId).textContent = `${pct}%`;
+    }
+
+    async function stepFreq(deltaHz) {
+      const target = Math.max(100000, currentFreqHz + deltaHz);
+      await setFreqHz(target);
+    }
+
+    async function setFreqHz(freqHz) {
+      const res = await apiPost("/api/radio/control", {
+        action: "set_freq",
+        frequency_hz: Math.round(freqHz),
+      });
+      if (res.ok) {
+        currentFreqHz = Math.round(freqHz);
+        document.getElementById("lblFreqFormatted").textContent = formatFreqHz(currentFreqHz);
+        showToast(`Frekuensi diubah ke ${formatFreqHz(currentFreqHz)} MHz`);
+      } else {
+        showToast(`Gagal mengubah frekuensi: ${res.error || res.response}`, true);
+      }
+      fetchStatus();
+    }
+
+    async function setFreqMHz(mhz, mode = null) {
+      await setFreqHz(Math.round(mhz * 1e6));
+      if (mode) {
+        document.getElementById("selMode").value = mode;
+        await applyMode();
+      }
+    }
+
+    function applyDirectFreq() {
+      const raw = document.getElementById("inpFreq").value.trim().replace(",", ".");
+      if (!raw) return;
+      const num = Number(raw);
+      if (isNaN(num) || num <= 0) {
+        showToast("Format frekuensi tidak valid", true);
+        return;
+      }
+      // Jika < 30000 anggap dalam satuan MHz (misal 145.500 atau 1296.100)
+      const hz = num < 30000 ? Math.round(num * 1e6) : Math.round(num);
+      setFreqHz(hz);
+    }
+
+    async function applyMode() {
+      const mode = document.getElementById("selMode").value;
+      const passband = Number(document.getElementById("inpPassband").value || 0);
+      const res = await apiPost("/api/radio/control", {
+        action: "set_mode",
+        mode,
+        passband_hz: passband,
+      });
+      if (res.ok) {
+        showToast(`Mode diubah ke ${mode}`);
+      } else {
+        showToast(`Gagal mengubah mode: ${res.error || res.response}`, true);
+      }
+      fetchStatus();
+    }
+
+    async function applyVfo() {
+      const vfo = document.getElementById("selVfo").value;
+      const res = await apiPost("/api/radio/control", { action: "set_vfo", vfo });
+      if (res.ok) {
+        showToast(`VFO aktif: ${vfo}`);
+      } else {
+        showToast(`Gagal mengubah VFO: ${res.error || res.response}`, true);
+      }
+      fetchStatus();
+    }
+
+    async function setPtt(pttState) {
+      if (pttState === 1 && !confirm("Aktifkan transmisi TX (PTT ON) pada Icom IC-9700?")) {
+        return;
+      }
+      const res = await apiPost("/api/radio/control", { action: "set_ptt", ptt: pttState });
+      if (res.ok) {
+        showToast(pttState ? "PTT TX AKTIF" : "Kembali ke RX");
+      } else {
+        showToast(`Gagal mengubah PTT: ${res.error || res.response}`, true);
+      }
+      fetchStatus();
+    }
+
+    async function setLevel(level, pctValue) {
+      const val = Number(pctValue) / 100.0;
+      const res = await apiPost("/api/radio/control", {
+        action: "set_level",
+        level,
+        value: val,
+      });
+      if (res.ok) {
+        showToast(`${level} diset ke ${pctValue}%`);
+      } else {
+        showToast(`Gagal mengubah ${level}: ${res.error || res.response}`, true);
+      }
+    }
+
+    function collectSettingsForm() {
+      return {
+        rig_port: document.getElementById("cfgPort").value,
+        rig_baud: Number(document.getElementById("cfgBaud").value),
+        rig_model: Number(document.getElementById("cfgModel").value),
+        civ_addr: document.getElementById("cfgCiv").value.trim(),
+        rigctld_bind: document.getElementById("cfgBind").value.trim(),
+        rigctld_port: Number(document.getElementById("cfgTcpPort").value),
+        extra_args: document.getElementById("cfgExtra").value.trim(),
+      };
+    }
+
+    async function saveAndRestartSettings() {
+      const payload = { ...collectSettingsForm(), restart: true };
+      const res = await apiPost("/api/settings", payload);
+      showToast(res.message || res.error, !res.ok);
+      fetchStatus();
+    }
+
+    async function testVfoConnection() {
+      showToast("Menguji baca frekuensi VFO (rigctl f)...");
+      const res = await apiPost("/api/service", {
+        action: "test_vfo",
+        settings: collectSettingsForm(),
+      });
+      const out = document.getElementById("rawOutput");
+      out.textContent = `[Tes VFO - ${res.method}]\nOutput: ${res.output}`;
+      if (res.ok) {
+        showToast(`Tes VFO Berhasil: ${formatFreqHz(res.frequency_hz)} MHz`);
+      } else {
+        showToast(`Tes VFO Gagal: ${res.output}`, true);
+      }
+      fetchStatus();
+    }
+
+    async function serviceAction(action) {
+      const res = await apiPost("/api/service", { action });
+      showToast(res.message || res.error, !res.ok);
+      fetchStatus();
+    }
+
+    async function sendRawCommand() {
+      const cmd = document.getElementById("inpRawCmd").value.trim();
+      if (!cmd) return;
+      const res = await apiPost("/api/radio/control", { action: "raw", command: cmd });
+      document.getElementById("rawOutput").textContent =
+        `> ${cmd}\n${res.ok ? res.response : "ERROR: " + res.error}`;
+      fetchStatus();
+    }
+
+    function setupPolling() {
+      clearInterval(pollTimer);
+      const ms = Number(document.getElementById("pollInterval").value);
+      if (ms > 0) {
+        pollTimer = setInterval(fetchStatus, ms);
+      }
+    }
+
+    document.getElementById("pollInterval").addEventListener("change", setupPolling);
+    fetchStatus();
+    setupPolling();
+  </script>
+</body>
+</html>

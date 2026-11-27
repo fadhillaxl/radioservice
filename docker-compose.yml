@@ -1,0 +1,30 @@
+services:
+  ic9700-rigctld:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ic9700-rigctld:ubuntu24.04
+    container_name: ic9700-rigctld
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+    environment:
+      RIG_MODEL: "3081"
+      RIG_BAUD: "115200"
+      CIV_ADDR: "0xA2"
+      RIGCTLD_BIND: "0.0.0.0"
+      RIGCTLD_PORT: "4532"
+      ENABLE_WEBUI: "true"
+      WEB_BIND: "0.0.0.0"
+      WEB_PORT: "8080"
+      STRICT_VFO_CHECK: "false"
+    volumes:
+      - /dev:/dev
+      - /run/udev:/run/udev:ro
+      - ./config:/config
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 4532 || bash -c '</dev/tcp/127.0.0.1/4532'"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
