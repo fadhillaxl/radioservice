@@ -12,7 +12,7 @@ Layanan Docker berbasis **Ubuntu 24.04** untuk mengontrol transceiver **Icom IC-
   - Deteksi symlink serial Port A (`/dev/serial/by-id/*IC-9700*A-if00-port0`) dengan fallback ke `/dev/ttyUSB0`.
   - Tes baca frekuensi VFO (`rigctl -m 3081 -s 115200 f`) saat startup.
   - Menjalankan `rigctld` yang bind ke `0.0.0.0:4532`.
-- **Web UI Monitoring & Update Setting (`webui/` di Port `8080`)**
+- **Web UI Monitoring & Update Setting (`webui/` di Port `8097`)**
   - Monitoring status `rigctld`, USB UART, ALSA Audio CODEC, frekuensi VFO, mode, bandwidth passband, VFO, PTT (RX/TX), S-Meter, dan SWR.
   - Kontrol frekuensi (step tuning & preset band 2m / 70cm / 23cm), mode, VFO, PTT, serta level RF Power, AF Gain, dan Squelch.
   - Update setting layanan (Port Serial, Baudrate, Model ID, Alamat CI-V, Bind Address/Port) dan restart `rigctld` langsung dari browser.
@@ -37,7 +37,7 @@ Pada menu transceiver IC-9700 (`MENU > SET > Connectors > CI-V`):
    ```
 
 3. **Akses Layanan:**
-   - **Web UI Monitoring & Settings:** `http://<IP-HOST>:8080`
+   - **Web UI Monitoring & Settings:** `http://<IP-HOST>:8097`
    - **Hamlib `rigctld` TCP Server:** `<IP-HOST>:4532`
 
 4. **Tes Koneksi `rigctld` via CLI:**

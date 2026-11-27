@@ -16,7 +16,7 @@ services:
       RIGCTLD_PORT: "4532"
       ENABLE_WEBUI: "true"
       WEB_BIND: "0.0.0.0"
-      WEB_PORT: "8080"
+      WEB_PORT: "8097"
       STRICT_VFO_CHECK: "false"
     volumes:
       - /dev:/dev

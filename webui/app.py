@@ -22,7 +22,7 @@ from urllib.parse import urlparse
 CONFIG_PATH = os.environ.get("IC9700_CONFIG_PATH", "/config/settings.json")
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
 WEB_HOST = os.environ.get("WEB_BIND", "0.0.0.0")
-WEB_PORT = int(os.environ.get("WEB_PORT", "8080"))
+WEB_PORT = int(os.environ.get("WEB_PORT", "8097"))
 
 
 def detect_default_serial_port() -> str:
@@ -595,8 +595,22 @@ def main():
     MANAGER.log("Memulai supervisor rigctld & Web UI Icom IC-9700...")
     MANAGER.start_rigctld()
 
-    server = ThreadingHTTPServer((WEB_HOST, WEB_PORT), RequestHandler)
-    MANAGER.log(f"Web UI Monitoring & Settings aktif di http://{WEB_HOST}:{WEB_PORT}")
+    candidate_ports = [WEB_PORT, 8097, 8700, 4580]
+    server = None
+    bound_port = None
+    for port in dict.fromkeys(candidate_ports):
+        try:
+            server = ThreadingHTTPServer((WEB_HOST, port), RequestHandler)
+            bound_port = port
+            break
+        except OSError as exc:
+            MANAGER.log(f"[WARN] Port Web UI {port} sudah dipakai layanan lain di host ({exc}). Mencoba port alternatif...")
+
+    if server is None:
+        MANAGER.log("[ERROR] Gagal melakukan bind Web UI pada seluruh kandidat port.")
+        raise SystemExit(1)
+
+    MANAGER.log(f"Web UI Monitoring & Settings aktif di http://{WEB_HOST}:{bound_port}")
 
     def handle_sig(signum, _frame):
         MANAGER.log(f"Menerima sinyal {signum}, menghentikan layanan...")

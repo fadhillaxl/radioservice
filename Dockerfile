@@ -36,13 +36,13 @@ ENV RIG_MODEL=3081 \
     RIGCTLD_EXTRA_ARGS="" \
     ENABLE_WEBUI=true \
     WEB_BIND=0.0.0.0 \
-    WEB_PORT=8080 \
+    WEB_PORT=8097 \
     STRICT_VFO_CHECK=false
 
 COPY webui/ /opt/webui/
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh /opt/webui/app.py
 
-EXPOSE 4532 8080
+EXPOSE 4532 8097
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
