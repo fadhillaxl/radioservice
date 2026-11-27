@@ -426,14 +426,18 @@ class RequestHandler(BaseHTTPRequestHandler):
         if "/api/status" not in self.path:
             super().log_message(fmt, *args)
 
-    def _send_json(self, data: dict, status: int = HTTPStatus.OK):
+    def _send_json(self, data: dict, status: int = HTTPStatus.OK, head_only: bool = False):
         body = json.dumps(data).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
-        self.wfile.write(body)
+        if not head_only:
+            self.wfile.write(body)
 
     def _read_json_body(self) -> dict:
         length = int(self.headers.get("Content-Length", "0"))
@@ -442,7 +446,20 @@ class RequestHandler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length)
         return json.loads(raw.decode("utf-8"))
 
+    def do_OPTIONS(self):
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    def do_HEAD(self):
+        self._handle_get_or_head(head_only=True)
+
     def do_GET(self):
+        self._handle_get_or_head(head_only=False)
+
+    def _handle_get_or_head(self, head_only: bool = False):
         parsed = urlparse(self.path)
         path = parsed.path
 
@@ -454,8 +471,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(HTTPStatus.OK)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
-                self.wfile.write(content)
+                if not head_only:
+                    self.wfile.write(content)
             except FileNotFoundError:
                 self.send_error(HTTPStatus.NOT_FOUND, "index.html tidak ditemukan")
             return
@@ -478,7 +497,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 "radio": telemetry,
                 "hardware": hw,
                 "logs": list(MANAGER.logs)[-50:],
-            })
+            }, head_only=head_only)
             return
 
         self.send_error(HTTPStatus.NOT_FOUND, "Endpoint tidak ditemukan")
